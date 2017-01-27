@@ -9,33 +9,44 @@ import java.util.*
  */
 class Learner(val size: Int, val rate: Double) {
     // list of weight
-    private var weights = DoubleArray(size, { i -> Random().nextDouble() })
+    val generator = Random()
+    private var weights = DoubleArray(size, { i -> 10 * generator.nextDouble() })
 
-    private val subject = PublishSubject.create<Array<Int>>()
+    private val subject = PublishSubject.create<Cost>()
 
     val receiver: Observable<Double> = subject
             .doOnNext { updateWeights(it) }
-            .map { it -> targetValue(it) }
+            .map { it -> deviation(it) }
 
-    private fun targetValue(input: Array<Int>): Double {
-        return input.last() - input.slice(1..(size - 2)).mapIndexed { i, it -> it * weights[i] }.sum()
+    private fun deviation(input: Cost): Double {
+        val diff = input.cost - scalarProduct(input.quantity, weights)
+        return diff * diff / 2
     }
 
     init {
-        receiver.subscribe { it -> println("target value: $it") }
+        receiver.subscribe { it -> println("deviation: $it") }
 
     }
 
-    private fun updateWeights(input: Array<Int>) {
-        val diff = input.last() + input.slice(1..(size - 2)).mapIndexed { i, it -> it * weights[i] }.sum()
-        weights = weights.mapIndexed { i, it -> it - rate * diff * input[i] }.toDoubleArray()
+    private fun updateWeights(input: Cost) {
+
+        val diff = input.cost - scalarProduct(input.quantity, weights)
+        weights = weights.mapIndexed { i, it -> it - rate * diff * input.quantity[i] }.toDoubleArray()
     }
 
-    fun learn(it: Array<Int>) {
+    fun learn(it: Cost) {
         subject.onNext(it)
     }
 
     fun done() {
-        print(weights.joinToString { it.toString() })
+        println("Done")
+    }
+
+    fun getWeights(): DoubleArray {
+        return weights.map { it }.toDoubleArray()
+    }
+
+    fun scalarProduct(a1: Array<Int>, a2: DoubleArray): Double {
+        return a1.mapIndexed { index, value -> a2[index] * value }.sum()
     }
 }
