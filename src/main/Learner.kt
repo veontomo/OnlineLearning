@@ -14,24 +14,26 @@ class Learner(val size: Int, val rate: Double) {
 
     private val subject = PublishSubject.create<Cost>()
 
-    val receiver: Observable<Double> = subject
-            .doOnNext { updateWeights(it) }
-            .map { it -> deviation(it) }
-
-    private fun deviation(input: Cost): Double {
-        val diff = input.cost - scalarProduct(input.quantity, weights)
-        return diff * diff / 2
-    }
+    val receiver: Observable<DoubleArray> = subject
+            .map { it -> newWeights(it) }
 
     init {
-        receiver.subscribe { it -> println("deviation: $it") }
+        println("initial weights: ${weights.joinToString()}")
+        receiver.subscribe { it -> updateWeight(it) }
 
     }
 
-    private fun updateWeights(input: Cost) {
+    private fun updateWeight(it: DoubleArray) {
+        weights = it
 
-        val diff = input.cost - scalarProduct(input.quantity, weights)
-        weights = weights.mapIndexed { i, it -> it - rate * diff * input.quantity[i] }.toDoubleArray()
+    }
+
+    private fun newWeights(input: Cost): DoubleArray {
+        val prod = scalarProduct(input.quantity, weights)
+        val diff = input.cost - prod
+//        println("(${input.quantity.joinToString()} )*(${weights.joinToString()}) = $prod")
+//        println("cost = ${input.cost}, diff = $diff")
+        return weights.mapIndexed { i, it -> it + rate * diff * input.quantity[i] }.toDoubleArray()
     }
 
     fun learn(it: Cost) {
@@ -40,6 +42,7 @@ class Learner(val size: Int, val rate: Double) {
 
     fun done() {
         println("Done")
+//        println("weights: ${weights.joinToString()}")
     }
 
     fun getWeights(): DoubleArray {
