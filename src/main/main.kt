@@ -6,7 +6,7 @@ import java.util.*
  */
 fun main(args: Array<String>) {
     // number of the input data to generate
-    val maxNum = 50
+    val maxNum = 150
     // number of features that each input data contains
     val numFeatures = 5
     // generating data
@@ -24,6 +24,9 @@ fun main(args: Array<String>) {
     items.forEach { learner.learn(it) }
 
     learner.done()
-    println(learner.getWeights().joinToString { it.toString() })
+    val result = learner.getWeights()
+    println("set weights: (${hiddenWeights.joinToString { it.toString() }})")
+    println("found weights: (${result.joinToString { it.toString() }})")
+    println("diff = ${hiddenWeights.mapIndexed { i, d -> d-result[i]}.map{ it*it }.sum()}")
 }
 
