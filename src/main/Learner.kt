@@ -1,3 +1,5 @@
+import kotlinx.coroutines.experimental.Here
+import kotlinx.coroutines.experimental.launch
 import rx.Observable
 import rx.subjects.PublishSubject
 import java.util.*
@@ -37,7 +39,9 @@ class Learner(val size: Int, val rate: Double) {
     }
 
     fun learn(it: Cost) {
-        subject.onNext(it)
+        launch(Here) {
+            subject.onNext(it)
+        }
     }
 
     fun done() {
